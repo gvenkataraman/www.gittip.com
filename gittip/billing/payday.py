@@ -458,6 +458,9 @@ class Payday(object):
 
         return not bool(error)  # True indicates success
 
+    def _construct_email_address(self, participant_id):
+        email_address = '%s@gittip.com' % (participant_id)
+        return email_address
 
     def ach_credit(self, ts_start, participant, tips, total):
 
@@ -493,7 +496,6 @@ class Payday(object):
         msg = "Crediting %s %d cents (%s - $%s fee = $%s) on Balanced ... "
         msg %= (participant['id'], cents, also_log, fee, credit_amount)
 
-
         # Try to dance with Balanced.
         # ===========================
 
@@ -513,7 +515,27 @@ class Payday(object):
                 log("%s has no valid bank account connected." % participant['id'])
                 return  # no valid funding destination
 
-            account.credit(cents)
+            # What do we need?
+            # Pass on the debit associated which resulted in this particular
+            # credit. ATM, I am not sure how to do this, so I am sticking to
+            # passing the payer_account and let balance figure out.
+            # Also, better way of pulling the balanced_account_uri is using the
+            # participant table, deferring that right now. This is an
+            # illustration of what information could be sent
+
+            payer_account_uris = list()
+
+            for tip in tips:
+                tipper = tip.get('tipper')
+                if not tipper:
+                    continue
+                email_address = self._construct_email_address(tipper)
+                balanced_accounts = balanced.Account.query.filter(email_address=email_address).all()
+                payer_account_uris.extend([account.uri for account in
+                                              balanced_accounts])
+
+            account.credit(cents, meta={'payer_account_uris':
+                                        payer_account_uris})
 
             error = ""
             log(msg + "succeeded.")

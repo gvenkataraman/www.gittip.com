@@ -252,6 +252,7 @@ def get_tips_and_total(tipper, for_payday=False, db=None):
         SELECT * FROM (
             SELECT DISTINCT ON (tippee)
                    amount
+                 , tipper
                  , tippee
                  , t.ctime
                  , p.claimed_time

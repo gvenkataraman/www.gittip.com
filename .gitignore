@@ -2,8 +2,10 @@ env/
 gittip.egg-info/
 *~
 *.pyc
+*.swp
 local.env
 tests/env
+gittip/tags
 *.idea/
 *.egg-info/
 nosetests.xml
